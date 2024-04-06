@@ -20,10 +20,10 @@
 //! submodule. Ammo, Armor, Food (Drink also categorized here), Potion, Power,
 //! Shout, Spell, Weapon. This could be tidier.
 
-use strum::{Display, EnumString, EnumVariantNames};
+use strum::{Display, EnumString, VariantNames};
 
 /// The Icon enum. Each variant maps to a known icon type.
-#[derive(Debug, Clone, Default, Hash, PartialEq, Eq, EnumString, EnumVariantNames, Display)]
+#[derive(Debug, Clone, Default, Hash, PartialEq, Eq, EnumString, VariantNames, Display)]
 #[strum(serialize_all = "snake_case")]
 pub enum Icon {
     Alteration,
@@ -544,10 +544,8 @@ impl Icon {
 /// For tests, pick a random icon to use for randomly-generated items.
 #[cfg(test)]
 pub fn random_icon() -> Icon {
-    use std::str::FromStr;
-
     use rand::prelude::*;
-    use strum::VariantNames;
+    use std::str::FromStr;
 
     if let Some(variant) = Icon::VARIANTS.choose(&mut rand::thread_rng()) {
         Icon::from_str(variant).unwrap_or(Icon::WeaponSwordTwoHanded)
@@ -616,7 +614,6 @@ mod tests {
     use std::str::FromStr;
 
     use once_cell::sync::Lazy;
-    use strum::VariantNames;
 
     use super::*;
 

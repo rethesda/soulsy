@@ -1,7 +1,7 @@
 //! OCF color keywords associated with specific colors.
 
 use eyre::{eyre, Result};
-use strum::{Display, EnumIter, EnumVariantNames, IntoEnumIterator};
+use strum::{Display, EnumIter, IntoEnumIterator, VariantNames};
 
 use crate::plugin::Color;
 
@@ -31,7 +31,7 @@ impl Default for Color {
     }
 }
 
-#[derive(Debug, Clone, Default, PartialEq, Eq, Hash, Display, EnumIter, EnumVariantNames)]
+#[derive(Debug, Clone, Default, PartialEq, Eq, Hash, Display, EnumIter, VariantNames)]
 #[strum(serialize_all = "lowercase")]
 pub enum InvColor {
     Aedric,
@@ -163,7 +163,6 @@ mod tests {
 #[cfg(test)]
 pub fn random_color() -> InvColor {
     use rand::prelude::*;
-    use strum::VariantNames;
     if let Some(variant) = InvColor::VARIANTS.choose(&mut rand::thread_rng()) {
         InvColor::try_from(*variant).unwrap_or(InvColor::Aedric)
     } else {

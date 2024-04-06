@@ -11,7 +11,6 @@ use std::sync::Mutex;
 
 use eyre::{eyre, Result};
 use once_cell::sync::Lazy;
-use resvg::usvg::TreeParsing;
 use resvg::*;
 
 use super::icons::Icon;
@@ -111,31 +110,31 @@ fn icon_to_path(icon: &Icon) -> PathBuf {
 fn load_and_rasterize(file_path: &PathBuf, maxsize: Option<u32>) -> Result<LoadedImage> {
     let buffer = std::fs::read(file_path)?;
     let opt = usvg::Options::default();
-    let tree = usvg::Tree::from_data(&buffer, &opt)?;
-    let rtree = resvg::Tree::from_usvg(&tree);
+    let fonts = usvg::fontdb::Database::new();
+    let rtree = usvg::Tree::from_data(&buffer, &opt, &fonts)?;
 
     let (size, transform) = if let Some(maxdim) = maxsize {
-        let size = if rtree.size.width() > rtree.size.height() {
-            rtree.size.to_int_size().scale_to_width(maxdim)
+        let size = if rtree.size().width() > rtree.size().height() {
+            rtree.size().to_int_size().scale_to_width(maxdim)
         } else {
-            rtree.size.to_int_size().scale_to_height(maxdim)
+            rtree.size().to_int_size().scale_to_height(maxdim)
         };
         if let Some(size) = size {
             let transform = tiny_skia::Transform::from_scale(
-                size.width() as f32 / rtree.size.width() as f32,
-                size.height() as f32 / rtree.size.height() as f32,
+                size.width() as f32 / rtree.size().width() as f32,
+                size.height() as f32 / rtree.size().height() as f32,
             );
             (size, transform)
         } else {
-            (rtree.size.to_int_size(), tiny_skia::Transform::default())
+            (rtree.size().to_int_size(), tiny_skia::Transform::default())
         }
     } else {
-        (rtree.size.to_int_size(), tiny_skia::Transform::default())
+        (rtree.size().to_int_size(), tiny_skia::Transform::default())
     };
 
     let mut pixmap = tiny_skia::Pixmap::new(size.width(), size.height())
         .ok_or(eyre!("unable to allocate pixmap to render into"))?;
-    rtree.render(transform, &mut pixmap.as_mut());
+    resvg::render(&rtree, transform, &mut pixmap.as_mut());
 
     Ok(LoadedImage {
         width: pixmap.width(),
