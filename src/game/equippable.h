@@ -33,13 +33,5 @@ namespace equippable
 
 	bool requiresTwoHands(RE::TESForm*& form);
 	RE::ActorValue getPotionEffect(RE::TESForm* form, bool filter);
-
-	struct KeywordAccumulator
-	{
-		static inline std::vector<std::string>* mKeywords = new std::vector<std::string>();
-		static inline void clear() { mKeywords->clear(); }
-
-		static RE::BSContainer::ForEachResult collect(RE::BGSKeyword& kwd);
-		static void printKeywords();
-	};
+	std::vector<std::string> collectKeywords(const RE::BGSKeywordForm* form);
 }

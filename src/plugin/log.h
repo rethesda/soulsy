@@ -30,7 +30,7 @@ namespace rlog
 
 		explicit critical(fmt::format_string<Args...> fmtstr,
 			Args&&... args,
-			SKSE::stl::source_location loc = SKSE::stl::source_location::current())
+			std::source_location loc = std::source_location::current())
 		{
 			const auto msg = fmt::format(fmtstr, std::forward<Args>(args)...);
 			log_error(msg);
@@ -100,7 +100,7 @@ namespace rlog
 
 		explicit debug(fmt::format_string<Args...> fmtstr,
 			Args&&... args,
-			SKSE::stl::source_location loc = SKSE::stl::source_location::current())
+			std::source_location loc = std::source_location::current())
 		{
 			const std::filesystem::path p = loc.file_name();
 			auto filename                 = p.filename().lexically_normal().generic_string();
@@ -123,7 +123,7 @@ namespace rlog
 
 		explicit trace(fmt::format_string<Args...> fmtstr,
 			Args&&... args,
-			SKSE::stl::source_location loc = SKSE::stl::source_location::current())
+			std::source_location loc = std::source_location::current())
 		{
 			const std::filesystem::path p = loc.file_name();
 			auto filename                 = p.filename().lexically_normal().generic_string();

@@ -11,7 +11,7 @@ namespace keycodes
 			case RE::INPUT_DEVICE::kKeyboard: key += kKeyboardOffset; break;
 			case RE::INPUT_DEVICE::kGamepad: key = gamepadIndex(static_cast<RE::BSWin32GamepadDevice::Key>(key)); break;
 			case RE::INPUT_DEVICE::kNone:
-			case RE::INPUT_DEVICE::kVirtualKeyboard:
+			// case RE::INPUT_DEVICE::kVirtualKeyboard:
 			// case RE::INPUT_DEVICE::kVRRight:
 			// case RE::INPUT_DEVICE::kVRLeft:
 			case RE::INPUT_DEVICE::kTotal: break;

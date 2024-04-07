@@ -240,11 +240,10 @@ namespace player
 
 	uint32_t getInventoryCountByForm(const RE::TESForm* form)
 	{
-		uint32_t count = 0;
-		if (!form) { return count; }
+		if (!form) { return 0; }
 
-		auto* player = RE::PlayerCharacter::GetSingleton();
-		count        = inventoryCount(form, form->GetFormType(), player);
+		auto* player   = RE::PlayerCharacter::GetSingleton();
+		uint32_t count = inventoryCount(form, form->GetFormType(), player);
 		// rlog::trace("item='{}'; count={};"sv, helpers::nameAsUtf8(form), count);
 
 		return count;
@@ -260,26 +259,20 @@ namespace player
 			return false;
 		}
 
-		auto* player = RE::PlayerCharacter::GetSingleton();
-		auto has_it  = false;
-		if (form->IsWeapon()) { has_it = inventoryCount(form, RE::FormType::Weapon, player) > 0; }
-		else if (form->IsArmor()) { has_it = inventoryCount(form, RE::FormType::Armor, player) > 0; }
-		else if (form->Is(RE::FormType::Light)) { has_it = inventoryCount(form, RE::FormType::Light, player) > 0; }
-		else if (form->Is(RE::FormType::Spell) || form->Is(RE::FormType::LeveledSpell))
+		auto* thePlayer = RE::PlayerCharacter::GetSingleton();
+		auto has_it     = false;
+		auto formType   = form->GetFormType();
+		if (RE::FormType::Spell == formType)
 		{
 			auto* spell = form->As<RE::SpellItem>();
-			has_it      = player->HasSpell(spell);
+			has_it      = thePlayer->HasSpell(spell);
 		}
-		else if (form->Is(RE::FormType::AlchemyItem))
-		{
-			has_it = inventoryCount(form, RE::FormType::AlchemyItem, player) > 0;
-		}
-		else if (form->Is(RE::FormType::Scroll)) { has_it = inventoryCount(form, RE::FormType::Scroll, player) > 0; }
-		else if (form->Is(RE::FormType::Shout))
+		else if (RE::FormType::Shout == formType)
 		{
 			const auto shout = form->As<RE::TESShout>();
-			has_it           = shouts::has_shout(player, shout);
+			has_it           = shouts::has_shout(thePlayer, shout);
 		}
+		else { has_it = inventoryCount(form, formType, thePlayer) > 0; }
 
 		rlog::trace("player has: {}; name='{}'; formID={};"sv, has_it, helpers::nameAsUtf8(form), form_spec);
 

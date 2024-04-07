@@ -84,8 +84,6 @@ namespace equippable
 			boundObject ? helpers::makeFormSpecString(boundObject) : helpers::makeFormSpecString(form);
 		bool twoHanded = requiresTwoHands(form);
 
-		KeywordAccumulator::clear();
-
 		if (form->Is(RE::FormType::Shout))
 		{
 			rlog::trace("making HudItem for shout: '{}'"sv, safename);
@@ -95,9 +93,8 @@ namespace equippable
 			auto* spell = shout->variations[RE::TESShout::VariationIDs::kOne].spell;  // always the first to ID
 			if (!spell) return simple_from_formdata(ItemCategory::Shout, std::move(safename), formSpec);
 
-			spell->ForEachKeyword(KeywordAccumulator::collect);
-			auto& keywords = KeywordAccumulator::mKeywords;
-			return categorize_shout(*keywords, std::move(safename), formSpec);
+			auto keywords = collectKeywords(spell);
+			return categorize_shout(keywords, std::move(safename), formSpec);
 		}
 
 		if (form->Is(RE::FormType::Spell))
@@ -115,10 +112,9 @@ namespace equippable
 					const auto* effect = costliest->baseEffect;
 					if (effect)
 					{
-						effect->ForEachKeyword(KeywordAccumulator::collect);
-						auto& keywords          = KeywordAccumulator::mKeywords;
+						auto keywords           = collectKeywords(effect);
 						rust::Box<HudItem> item = hud_item_from_keywords(
-							ItemCategory::Power, *keywords, std::move(safename), formSpec, 1, false);
+							ItemCategory::Power, keywords, std::move(safename), formSpec, 1, false);
 						return item;
 					}
 				}
@@ -132,12 +128,11 @@ namespace equippable
 				const auto* effect = costliest->baseEffect;
 				if (effect)
 				{
-					effect->ForEachKeyword(KeywordAccumulator::collect);
-					auto& keywords          = KeywordAccumulator::mKeywords;
+					auto keywords           = collectKeywords(effect);
 					auto skill_level        = effect->GetMinimumSkillLevel();
 					auto data               = fillOutSpellData(twoHanded, skill_level, effect);
 					rust::Box<HudItem> item = magic_from_spelldata(
-						ItemCategory::Spell, std::move(data), *keywords, std::move(safename), formSpec, 1);
+						ItemCategory::Spell, std::move(data), keywords, std::move(safename), formSpec, 1);
 					return item;
 				}
 			}
@@ -147,11 +142,10 @@ namespace equippable
 		{
 			rlog::trace("making HudItem for ammo: '{}'"sv, safename);
 			const auto* ammo = form->As<RE::TESAmmo>()->AsKeywordForm();
-			ammo->ForEachKeyword(KeywordAccumulator::collect);
-			auto& keywords = KeywordAccumulator::mKeywords;
+			auto keywords    = collectKeywords(ammo);
 
 			rust::Box<HudItem> item =
-				hud_item_from_keywords(ItemCategory::Ammo, *keywords, std::move(safename), formSpec, count, false);
+				hud_item_from_keywords(ItemCategory::Ammo, keywords, std::move(safename), formSpec, count, false);
 			return item;
 		}
 
@@ -161,11 +155,10 @@ namespace equippable
 			if (weapon)
 			{
 				rlog::trace("making HudItem for weapon: '{}'"sv, safename);
-				weapon->ForEachKeyword(KeywordAccumulator::collect);
-				auto& keywords = KeywordAccumulator::mKeywords;
-				if (weapon->IsBound()) { keywords->push_back(std::string("OCF_InvColorBound")); }
+				auto keywords = collectKeywords(weapon);
+				if (weapon->IsBound()) { keywords.push_back(std::string("OCF_InvColorBound")); }
 				rust::Box<HudItem> item = hud_item_from_keywords(
-					ItemCategory::Weapon, *keywords, std::move(safename), formSpec, count, twoHanded);
+					ItemCategory::Weapon, keywords, std::move(safename), formSpec, count, twoHanded);
 
 				return item;
 			}
@@ -175,10 +168,9 @@ namespace equippable
 		{
 			rlog::trace("making HudItem for armor: '{}'"sv, safename);
 			const auto* armor = form->As<RE::TESObjectARMO>();
-			armor->ForEachKeyword(KeywordAccumulator::collect);
-			auto& keywords = KeywordAccumulator::mKeywords;
+			auto keywords     = collectKeywords(armor);
 			rust::Box<HudItem> item =
-				hud_item_from_keywords(ItemCategory::Armor, *keywords, std::move(safename), formSpec, count, false);
+				hud_item_from_keywords(ItemCategory::Armor, keywords, std::move(safename), formSpec, count, false);
 
 			return item;
 		}
@@ -209,13 +201,12 @@ namespace equippable
 			if (scroll->GetCostliestEffectItem() && scroll->GetCostliestEffectItem()->baseEffect)
 			{
 				const auto effect = scroll->GetCostliestEffectItem()->baseEffect;
-				effect->ForEachKeyword(KeywordAccumulator::collect);
-				auto& keywords  = KeywordAccumulator::mKeywords;
-				auto skillLevel = effect->GetMinimumSkillLevel();
+				auto keywords     = collectKeywords(effect);
+				auto skillLevel   = effect->GetMinimumSkillLevel();
 
 				auto data               = fillOutSpellData(twoHanded, skillLevel, effect);
 				rust::Box<HudItem> item = magic_from_spelldata(
-					ItemCategory::Scroll, std::move(data), *keywords, std::move(safename), formSpec, count);
+					ItemCategory::Scroll, std::move(data), keywords, std::move(safename), formSpec, count);
 				return item;
 			}
 		}
@@ -227,10 +218,9 @@ namespace equippable
 			if (alchemy_potion->IsFood())
 			{
 				rlog::trace("making HudItem for food: '{}'"sv, safename);
-				alchemy_potion->ForEachKeyword(KeywordAccumulator::collect);
-				auto& keywords = KeywordAccumulator::mKeywords;
+				auto keywords = collectKeywords(alchemy_potion);
 				rust::Box<HudItem> item =
-					hud_item_from_keywords(ItemCategory::Food, *keywords, std::move(safename), formSpec, count, false);
+					hud_item_from_keywords(ItemCategory::Food, keywords, std::move(safename), formSpec, count, false);
 				return item;
 			}
 			else
@@ -263,19 +253,17 @@ namespace equippable
 		return empty_huditem();
 	}
 
-	RE::BSContainer::ForEachResult KeywordAccumulator::collect(RE::BGSKeyword& kwd)
+	std::vector<std::string> collectKeywords(const RE::BGSKeywordForm* form)
 	{
-		if (!mKeywords) { mKeywords = new std::vector<std::string>(); }
+		const auto span = form->GetKeywords();
+		std::vector<std::string> result;
+		for (auto kwd : span)
+		{
+			auto id  = kwd->GetFormEditorID();
+			auto str = std::string(id);
+			result.push_back(str);
+		}
 
-		auto id  = kwd.GetFormEditorID();
-		auto str = std::string(id);
-		mKeywords->push_back(str);
-		return RE::BSContainer::ForEachResult::kContinue;
-	}
-
-	void KeywordAccumulator::printKeywords()
-	{
-		if (!mKeywords) { rlog::debug("no keywords to print"); }
-		for (std::string kwd : *mKeywords) { rlog::info("{}"sv, kwd); }
+		return std::move(result);
 	}
 }
