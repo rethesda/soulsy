@@ -91,7 +91,7 @@ namespace ui
 			rlog::error("Cannot find game renderer. Initialization failed.");
 			return;
 		}
-		const auto rendererData = renderer->GetRendererDataSingleton();
+		const auto rendererData = renderer->GetRendererData();
 
 		const auto context   = rendererData->context;
 		const auto swapChain = rendererData->renderWindows->swapChain;
@@ -216,7 +216,7 @@ namespace ui
 			rlog::error("Cannot find render manager. Unable to build new texture."sv);
 			return false;
 		}
-		const auto rendererData = renderer->GetRendererDataSingleton();
+		const auto rendererData = renderer->GetRendererData();
 		const auto forwarder    = rendererData->forwarder;
 
 		// Create texture

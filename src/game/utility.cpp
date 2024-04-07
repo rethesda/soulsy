@@ -316,7 +316,7 @@ namespace utility
 	// ---------- perk visitor, used only by the actor value potion selection
 
 	using PerkFuncType     = RE::BGSEntryPointPerkEntry::EntryData::Function;
-	using PerkFuncDataType = RE::BGSEntryPointFunctionData::ENTRY_POINT_FUNCTION_DATA;
+	using PerkFuncDataType = RE::BGSEntryPointFunctionData::FunctionType;
 
 	RE::BSContainer::ForEachResult perk_visitor::Visit(RE::BGSPerkEntry* perk_entry)
 	{

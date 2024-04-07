@@ -298,7 +298,7 @@ namespace player
 
 	uint32_t inventoryCount(const RE::TESForm* form, RE::FormType formType, RE::PlayerCharacter*& thePlayer)
 	{
-		if (!form || !formType) { return 0; }
+		if (!form) { return 0; }
 		auto count     = 0;
 		auto inventory = getInventoryForType(thePlayer, formType);
 		for (const auto& [item, inv_data] : inventory)
